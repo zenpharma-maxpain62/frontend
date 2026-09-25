@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "pharma-ui.fullname" . }}-test-connection"
+  labels:
+    {{- include "pharma-ui.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "pharma-ui.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never
