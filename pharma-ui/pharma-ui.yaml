@@ -1,0 +1,144 @@
+---
+# Source: pharma-ui/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pharma-ui
+  labels:
+    helm.sh/chart: pharma-ui-0.1.0
+    app.kubernetes.io/name: pharma-ui
+    app.kubernetes.io/instance: pharma-ui
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+automountServiceAccountToken: true
+
+---
+# Source: pharma-ui/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: pharma-ui
+  labels:
+    helm.sh/chart: pharma-ui-0.1.0
+    app.kubernetes.io/name: pharma-ui
+    app.kubernetes.io/instance: pharma-ui
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: pharma-ui
+    app.kubernetes.io/instance: pharma-ui
+
+---
+# Source: pharma-ui/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pharma-ui
+  labels:
+    helm.sh/chart: pharma-ui-0.1.0
+    app.kubernetes.io/name: pharma-ui
+    app.kubernetes.io/instance: pharma-ui
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pharma-ui
+      app.kubernetes.io/instance: pharma-ui
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: pharma-ui-0.1.0
+        app.kubernetes.io/name: pharma-ui
+        app.kubernetes.io/instance: pharma-ui
+        app.kubernetes.io/version: "1.16.0"
+        app.kubernetes.io/managed-by: Helm
+    spec:
+      serviceAccountName: pharma-ui
+      securityContext:
+        fsGroup: 2000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: pharma-ui
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          image: "134448505602.dkr.ecr.ap-south-1.amazonaws.com/pharma-ui:sha-1234567"
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+
+---
+# Source: pharma-ui/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pharma-ui
+  labels:
+    helm.sh/chart: pharma-ui-0.1.0
+    app.kubernetes.io/name: pharma-ui
+    app.kubernetes.io/instance: pharma-ui
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    alb.ingress.kubernetes.io/group.name: pharma-dev
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pharma-ui
+                port:
+                  number: 80
+---
+# Source: pharma-ui/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "pharma-ui-test-connection"
+  labels:
+    helm.sh/chart: pharma-ui-0.1.0
+    app.kubernetes.io/name: pharma-ui
+    app.kubernetes.io/instance: pharma-ui
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['pharma-ui:80']
+  restartPolicy: Never
+
