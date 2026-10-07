@@ -209,8 +209,8 @@ jobs:
           yq e ".image.tag = \"${IMAGE_TAG}\"" -i \
             "_gitops/envs/dev/values-pharma-ui.yaml"
           cd _gitops
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name  "maxpain62"
+          git config user.email "maxpain62@gmail.com"
           git add .
           git diff --staged --quiet && echo "Already up to date" && exit 0
           git commit -m "ci(dev): update pharma-ui → ${IMAGE_TAG}"
